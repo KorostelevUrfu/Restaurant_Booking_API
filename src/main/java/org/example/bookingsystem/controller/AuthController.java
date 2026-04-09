@@ -1,5 +1,6 @@
 package org.example.bookingsystem.controller;
 
+import jakarta.validation.Valid;
 import org.example.bookingsystem.AuthResponse;
 import org.example.bookingsystem.dto.LoginRequest;
 import org.example.bookingsystem.dto.RegisterRequest;
@@ -24,7 +25,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         try {
             User user = userService.register(request);
 
@@ -39,7 +40,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         User user = userService.findByLogin(request.getLogin());
 
         if (user == null) {
@@ -49,7 +50,7 @@ public class AuthController {
 
         if(userService.isAccountTemporaryBanned(user)){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Account is temporary banned. Try later");
+                    .body("Account is temporary banned for " + userService.getTemporaryBanTime() + " minutes. Try later");
         }
 
         if(!userService.checkPassword(request.getPassword(), user.getPasswordHash())){

@@ -24,7 +24,20 @@ public class UserService {
         this.jwtUtil = jwtUtil;
     }
 
+    public int getTemporaryBanTime(){
+        return TEMPORARY_BAN_MINUTES;
+    }
+
+
     public User register(RegisterRequest request) {
+
+        //проверка отчества на валидность
+        String middleName = request.getMiddleName();
+        if (middleName != null && !middleName.isEmpty()) {
+            if (!middleName.matches("^[А-Яа-яA-Za-z-]+$")) {
+                throw new RuntimeException("Middle name contains invalid characters");
+            }
+        }
 
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new RuntimeException("Passwords do not match");
@@ -107,7 +120,8 @@ public class UserService {
         //проверяем не достиг ли лимита
         User updatedUser = userRepository.findByLogin(user.getLogin()).orElse(user);
 
-        if (updatedUser.getFailedAttempt() >= 2) {
+        //хз почему такое ограничение работает но главное что работает
+        if (updatedUser.getFailedAttempt() >= 1) {
             temporaryBan(updatedUser);
         }
     }
