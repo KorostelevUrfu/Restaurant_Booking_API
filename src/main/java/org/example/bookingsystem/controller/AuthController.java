@@ -1,7 +1,6 @@
 package org.example.bookingsystem.controller;
 
 import org.example.bookingsystem.AuthResponse;
-import org.example.bookingsystem.JWTUtil;
 import org.example.bookingsystem.dto.LoginRequest;
 import org.example.bookingsystem.dto.RegisterRequest;
 import org.example.bookingsystem.entity.User;
@@ -40,12 +39,25 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         User user = userService.findByLogin(request.getLogin());
 
-        if (user == null || !userService.checkPassword(request.getPassword(), user.getPasswordHash())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Invalid credentials");
         }
+
+        if(userService.isAccountTemporaryBanned(user)){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Account is temporary banned. Try later");
+        }
+
+        if(!userService.checkPassword(request.getPassword(), user.getPasswordHash())){
+            userService.incrementFailedAttempts(user);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Invalid password");
+        }
+        userService.resetFailedAttempts(user);
 
         String token = userService.getToken(user.getLogin(), user.getRole());
         String fullName = userService.getFullname(user.getLastName(), user.getFirstName(), user.getMiddleName());

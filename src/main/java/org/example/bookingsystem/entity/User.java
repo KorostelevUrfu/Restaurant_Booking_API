@@ -38,6 +38,11 @@ public class User {
     //активна учетка или нет(нет - "удалена")
     private boolean isActive;
 
+    @Column(nullable = false)
+    private int failedAttempt;
+
+    private LocalDateTime temporaryBan;
+
     public User(){}
 
     public User(String login, String passwordHash, String lastName, String firstName, String middleName, String phone, String email) {
@@ -51,6 +56,8 @@ public class User {
         this.role = "client";
         this.createdAt = LocalDateTime.now();
         this.isActive = true;
+        this.failedAttempt = 0;
+        this.temporaryBan = null;
     }
 
     public long getId() {
@@ -121,7 +128,23 @@ public class User {
         return isActive;
     }
 
-    public void setIsAcrive(boolean isActive){
+    public void setIsActive(boolean isActive){
         this.isActive = isActive;
+    }
+
+    public int getFailedAttempt() {
+        return failedAttempt;
+    }
+
+    public void setFailedAttempt(int failedAttempt) {
+        this.failedAttempt = failedAttempt;
+    }
+
+    public LocalDateTime getTemporaryBan() {
+        return temporaryBan;
+    }
+
+    public void setTemporaryBan(LocalDateTime temporaryBan) {
+        this.temporaryBan = temporaryBan;
     }
 }
