@@ -13,6 +13,7 @@ public class AuthResponse {
         this.role = role;
         this.userId = userId;
         this.fullName = fullName;
+
     }
 
     public String getToken() {
@@ -39,11 +40,7 @@ public class AuthResponse {
         this.userId = userId;
     }
 
-    public String getFullName() {
+    public String getFullname(){
         return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
     }
 }

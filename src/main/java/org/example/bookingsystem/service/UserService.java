@@ -1,5 +1,6 @@
 package org.example.bookingsystem.service;
 
+import org.example.bookingsystem.JWTUtil;
 import org.example.bookingsystem.dto.RegisterRequest;
 import org.example.bookingsystem.entity.User;
 import org.example.bookingsystem.repository.UserRepository;
@@ -11,10 +12,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JWTUtil jwtUtil;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JWTUtil jwtUtil) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
     public User register(RegisterRequest request) {
@@ -67,18 +70,28 @@ public class UserService {
 
     public void deleteUser(String login) {
         User user = findByLogin(login);
-        if (user == null) {
+        if (user == null || !user.getIsActive()) {
             throw new RuntimeException("User not found");
         }
-        userRepository.delete(user);
+        //просто делаем пометку что пользователь деактивирован
+        user.setIsAcrive(false);
+    }
+
+    //получение токена
+    public String getToken(String login, String role){
+        return jwtUtil.generateToken(login, role);
+    }
+
+    public String getFullname(String lastName, String firstName, String middleName){
+        String fullName = lastName + " " + firstName;
+        if (middleName != null && !middleName.isEmpty()) {
+            fullName += " " + middleName;
+        }
+        return fullName;
     }
 
     public User findByLogin(String login) {
         return userRepository.findByLogin(login).orElse(null);
-    }
-
-    public User findById(Long id) {
-        return userRepository.findById(id).orElse(null);
     }
 
     public boolean checkPassword(String rawPassword, String encodedPassword) {

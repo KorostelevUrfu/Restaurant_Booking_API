@@ -35,6 +35,9 @@ public class User {
 
     private LocalDateTime createdAt;
 
+    //активна учетка или нет(нет - "удалена")
+    private boolean isActive;
+
     public User(){}
 
     public User(String login, String passwordHash, String lastName, String firstName, String middleName, String phone, String email) {
@@ -47,6 +50,7 @@ public class User {
         this.email = email;
         this.role = "client";
         this.createdAt = LocalDateTime.now();
+        this.isActive = true;
     }
 
     public long getId() {
@@ -111,5 +115,13 @@ public class User {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsAcrive(boolean isActive){
+        this.isActive = isActive;
     }
 }
