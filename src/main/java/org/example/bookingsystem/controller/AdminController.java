@@ -34,14 +34,14 @@ public class AdminController {
         return ResponseEntity.ok(user);
     }
 
-    //удалить пользователя по логину
-    @DeleteMapping("/users/{userLogin}")
-    public ResponseEntity<?> deleteUser(@PathVariable String userLogin) {
-        User user = userService.findByLogin(userLogin);
-        if (user == null) {
-            return ResponseEntity.badRequest().body("{\"error\": \"User not found\"}");
-        }
-        userService.deleteUser(user.getLogin());
-        return ResponseEntity.ok("{\"message\": \"User deleted\"}");
-    }
+//    //удалить пользователя по логину
+//    @DeleteMapping("/users/{userLogin}")
+//    public ResponseEntity<?> deleteUser(@PathVariable String userLogin) {
+//        User user = userService.findByLogin(userLogin);
+//        if (user == null) {
+//            return ResponseEntity.badRequest().body("{\"error\": \"User not found\"}");
+//        }
+//        userService.deleteUser(user.getLogin());
+//        return ResponseEntity.ok("{\"message\": \"User deleted\"}");
+//    }
 }

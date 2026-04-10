@@ -1,5 +1,6 @@
 package org.example.bookingsystem.config;
 
+import org.example.bookingsystem.CustomUserDetails;
 import org.example.bookingsystem.entity.User;
 import org.example.bookingsystem.repository.UserRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,12 +25,11 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByLogin(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().toUpperCase());
-
-        return new org.springframework.security.core.userdetails.User(
+        return new CustomUserDetails(
                 user.getLogin(),
                 user.getPasswordHash(),
-                Collections.singletonList(authority)
+                user.getPublicId(),
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().toUpperCase()))
         );
     }
 }

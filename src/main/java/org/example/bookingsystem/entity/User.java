@@ -2,6 +2,7 @@ package org.example.bookingsystem.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name="users")
@@ -10,6 +11,9 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
+
+    @Column(unique = true, nullable = false, updatable = false)
+    private UUID publicId;
 
     @Column(unique = true, nullable = false)
     private String login;
@@ -58,6 +62,7 @@ public class User {
         this.isActive = true;
         this.failedAttempt = 0;
         this.temporaryBan = null;
+        this.publicId = UUID.randomUUID();
     }
 
     public long getId() {
@@ -92,8 +97,16 @@ public class User {
         return firstName;
     }
 
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
     public String getMiddleName() {
         return middleName;
+    }
+
+    public void setMiddleName(String middleName) {
+        this.middleName = middleName;
     }
 
     public String getPhone() {
@@ -146,5 +159,9 @@ public class User {
 
     public void setTemporaryBan(LocalDateTime temporaryBan) {
         this.temporaryBan = temporaryBan;
+    }
+
+    public UUID getPublicId() {
+        return publicId;
     }
 }

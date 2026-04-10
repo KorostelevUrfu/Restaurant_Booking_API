@@ -1,4 +1,4 @@
-package org.example.bookingsystem;
+package org.example.bookingsystem.response;
 
 public class AuthResponse {
     private String token;

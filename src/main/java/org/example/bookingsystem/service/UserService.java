@@ -1,13 +1,18 @@
 package org.example.bookingsystem.service;
 
+import org.example.bookingsystem.CustomUserDetails;
 import org.example.bookingsystem.JWTUtil;
 import org.example.bookingsystem.dto.RegisterRequest;
+import org.example.bookingsystem.dto.UpdatePasswordRequest;
+import org.example.bookingsystem.dto.UpdateRequest;
 import org.example.bookingsystem.entity.User;
 import org.example.bookingsystem.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -16,7 +21,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JWTUtil jwtUtil;
     //время блокировки пользователя при 3 неудачных попытках входа в систему
-    private final int TEMPORARY_BAN_MINUTES = 10;
+    private final int TEMPORARY_BAN_MINUTES = 1;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JWTUtil jwtUtil) {
         this.userRepository = userRepository;
@@ -31,7 +36,6 @@ public class UserService {
 
     public User register(RegisterRequest request) {
 
-        //проверка отчества на валидность
         String middleName = request.getMiddleName();
         if (middleName != null && !middleName.isEmpty()) {
             if (!middleName.matches("^[А-Яа-яA-Za-z-]+$")) {
@@ -84,18 +88,9 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public void deleteUser(String login) {
-        User user = findByLogin(login);
-        if (user == null || !user.getIsActive()) {
-            throw new RuntimeException("User not found");
-        }
-        //просто делаем пометку что пользователь деактивирован
-        user.setIsActive(false);
-    }
-
     //получение токена
-    public String getToken(String login, String role){
-        return jwtUtil.generateToken(login, role);
+    public String getToken(User user){
+        return jwtUtil.generateToken(user);
     }
 
     public String getFullname(String lastName, String firstName, String middleName){
@@ -146,5 +141,88 @@ public class UserService {
             return false;
         }
         return true;
+    }
+
+    @Transactional
+    public void changePassword(UUID publicId, UpdatePasswordRequest request) {
+
+        // 1. Получаем пользователя
+        User user = userRepository.findByPublicId(publicId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 2. Проверяем текущий пароль
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+
+        // 3. Проверяем, что новый пароль совпадает с подтверждением
+        if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
+            throw new RuntimeException("New passwords do not match");
+        }
+
+        // 4. Проверяем, что новый пароль отличается от старого
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPasswordHash())) {
+            throw new RuntimeException("New password must be different from current password");
+        }
+
+        // 5. Обновляем пароль
+        int updatedRows = userRepository.updatePassword(
+                passwordEncoder.encode(request.getNewPassword()),
+                publicId
+        );
+
+        // 6. Проверяем, что обновление произошло
+        if (updatedRows == 0) {
+            throw new RuntimeException("Failed to update password");
+        }
+    }
+
+    public User updateUserInfo(CustomUserDetails userDetails, UpdateRequest request) {
+        UUID publicId = userDetails.getPublicId();
+
+        //обновляем поля которые не null
+        User user = findByPublicId(publicId);
+
+        if (request.getLastName() != null) {
+            user.setLastName(request.getLastName());
+        }
+        if (request.getFirstName() != null) {
+            user.setFirstName(request.getFirstName());
+        }
+        if (request.getMiddleName() != null) {
+            user.setMiddleName(request.getMiddleName());
+        }
+        if (request.getPhone() != null) {
+            if (userRepository.existsByPhone(request.getPhone())) {
+                User existing = userRepository.findByPhone(request.getPhone()).get();
+                if (existing.getPublicId() != publicId) {
+                    throw new RuntimeException("Phone already taken");
+                }
+            }
+            user.setPhone(request.getPhone());
+        }
+        if (request.getEmail() != null) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                User existing = userRepository.findByEmail(request.getEmail()).get();
+                if (existing.getPublicId() != publicId) {
+                    throw new RuntimeException("Email already taken");
+                }
+            }
+            user.setEmail(request.getEmail());
+        }
+        userRepository.save(user);
+        return user;
+    }
+
+    public void deleteUserByPublicId(UUID publicId) {
+        User user = userRepository.findByPublicId(publicId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setIsActive(false);
+        userRepository.save(user);
+    }
+
+    public User findByPublicId(UUID pubicId){
+        return userRepository.findByPublicId(pubicId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }
